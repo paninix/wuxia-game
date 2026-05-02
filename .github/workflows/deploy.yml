@@ -1,0 +1,25 @@
+name: 部署到本地服务器
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 部署后端
+        run: |
+          cd backend
+          npm install
+          npm run build
+          pm2 restart wuxia-game-backend || pm2 start dist/index.js --name wuxia-game-backend
+          
+      - name: 部署前端
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          echo "前端构建完成，需用Nginx或serve托管"
