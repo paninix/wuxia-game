@@ -15,9 +15,9 @@ jobs:
         cd backend
         npm install
         npm run build
-        pm2 restart wuxia-game-backend
+        node node_modules/pm2/bin/pm2 restart wuxia-game-backend
         if ($LASTEXITCODE -ne 0) {
-          pm2 start dist/index.js --name wuxia-game-backend
+          node node_modules/pm2/bin/pm2 start dist/index.js --name wuxia-game-backend
         }
     
     - name: 部署前端
