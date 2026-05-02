@@ -13,7 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // 连接MongoDB
-mongoose.connect(process.env.MONGODB_URI!)
+const mongoURI = process.env.MONGO_URL || process.env.MONGODB_URI;
+mongoose.connect(mongoURI!)
   .then(() => console.log('MongoDB连接成功'))
   .catch(err => console.error('MongoDB连接失败:', err));
 
