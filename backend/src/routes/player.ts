@@ -10,7 +10,8 @@ router.post('/create', async (req, res) => {
     
     const existingPlayer = await Player.findOne({ name });
     if (existingPlayer) {
-      return res.status(400).json({ message: '该玩家名称已存在' });
+      // 玩家已存在，直接返回该玩家
+      return res.json(existingPlayer);
     }
 
     const player = new Player({ name });
