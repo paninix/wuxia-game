@@ -11,15 +11,16 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: 部署后端
-      shell: bash
       run: |
         cd backend
         npm install
         npm run build
-        pm2 restart wuxia-game-backend || pm2 start dist/index.js --name wuxia-game-backend
+        pm2 restart wuxia-game-backend
+        if ($LASTEXITCODE -ne 0) {
+          pm2 start dist/index.js --name wuxia-game-backend
+        }
     
     - name: 部署前端
-      shell: bash
       run: |
         cd frontend
         npm install
