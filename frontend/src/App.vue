@@ -4,7 +4,7 @@ import { createPlayer, getPlayer, updatePlayer, type Player } from './api/player
 
 const playerName = ref('');
 const player = ref<Player | null>(null);
-const message = ref('欢迎来到文字武侠世界！');
+const message = ref('欢迎来到金庸武侠世界！');
 
 const handleCreatePlayer = async () => {
   if (!playerName.value.trim()) {
@@ -85,7 +85,7 @@ if (savedName) {
 
 <template>
   <div class="game-container">
-    <h1>文字武侠世界</h1>
+    <h1>金庸武侠世界</h1>
     <div class="message">{{ message }}</div>
 
     <div v-if="!player" class="create-box">
