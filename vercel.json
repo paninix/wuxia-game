@@ -1,0 +1,8 @@
+{
+  "root": "frontend",
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
