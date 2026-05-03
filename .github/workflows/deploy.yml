@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
 
+# 定义项目配置（新项目只需修改这里）
+env:
+  PROJECT_NAME: wuxia-game
+  BACKEND_PORT: 3000
+
 jobs:
   deploy:
     runs-on: self-hosted
@@ -17,17 +22,19 @@ jobs:
         npm install
         npm run build
         
-        # 删除原来的 dist，然后复制新的
-        Remove-Item -Recurse -Force "C:/Users/Administrator/Desktop/Code/backend/dist" -ErrorAction SilentlyContinue
-        Copy-Item -Recurse -Force dist "C:/Users/Administrator/Desktop/Code/backend/dist"
-        Copy-Item -Force package.json "C:/Users/Administrator/Desktop/Code/backend/package.json"
+        # 部署到统一目录
+        $targetDir = "D:/Development/okii-deploy/okii-back/$env:PROJECT_NAME"
+        New-Item -ItemType Directory -Force -Path $targetDir
+        Remove-Item -Recurse -Force "$targetDir/dist" -ErrorAction SilentlyContinue
+        Copy-Item -Recurse -Force dist "$targetDir/dist"
+        Copy-Item -Force package.json "$targetDir/package.json"
         
-        # 到实际项目目录重启 PM2
-        cd "C:/Users/Administrator/Desktop/Code/backend"
+        # 到统一目录重启 PM2
+        cd $targetDir
         npm install
-        node node_modules/pm2/bin/pm2 restart wuxia-game-backend
+        node node_modules/pm2/bin/pm2 restart $env:PROJECT_NAME
         if ($LASTEXITCODE -ne 0) {
-          node node_modules/pm2/bin/pm2 start dist/index.js --name wuxia-game-backend
+          node node_modules/pm2/bin/pm2 start dist/index.js --name $env:PROJECT_NAME
         }
     
     - name: 部署前端
@@ -37,6 +44,8 @@ jobs:
         npm install
         npm run build
         
-        # 删除原来的 dist，然后复制新的
-        Remove-Item -Recurse -Force "C:/Users/Administrator/Desktop/Code/frontend/dist" -ErrorAction SilentlyContinue
-        Copy-Item -Recurse -Force dist "C:/Users/Administrator/Desktop/Code/frontend/dist"
+        # 部署到统一目录
+        $targetDir = "D:/Development/okii-deploy/okii-front/$env:PROJECT_NAME"
+        New-Item -ItemType Directory -Force -Path $targetDir
+        Remove-Item -Recurse -Force "$targetDir/dist" -ErrorAction SilentlyContinue
+        Copy-Item -Recurse -Force dist "$targetDir/dist"
