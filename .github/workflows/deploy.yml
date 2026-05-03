@@ -17,13 +17,14 @@ jobs:
         npm install
         npm run build
         
-        # 复制构建产物到实际项目目录
+        # 删除原来的 dist，然后复制新的
+        Remove-Item -Recurse -Force "C:/Users/Administrator/Desktop/Code/backend/dist" -ErrorAction SilentlyContinue
         Copy-Item -Recurse -Force dist "C:/Users/Administrator/Desktop/Code/backend/dist"
         Copy-Item -Force package.json "C:/Users/Administrator/Desktop/Code/backend/package.json"
         
         # 到实际项目目录重启 PM2
         cd "C:/Users/Administrator/Desktop/Code/backend"
-        npm install --production
+        npm install
         node node_modules/pm2/bin/pm2 restart wuxia-game-backend
         if ($LASTEXITCODE -ne 0) {
           node node_modules/pm2/bin/pm2 start dist/index.js --name wuxia-game-backend
@@ -36,5 +37,6 @@ jobs:
         npm install
         npm run build
         
-        # 复制构建产物到实际项目目录
+        # 删除原来的 dist，然后复制新的
+        Remove-Item -Recurse -Force "C:/Users/Administrator/Desktop/Code/frontend/dist" -ErrorAction SilentlyContinue
         Copy-Item -Recurse -Force dist "C:/Users/Administrator/Desktop/Code/frontend/dist"
