@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPlayer extends Document {
+  username: string;
+  password: string;
   name: string;
   level: number;
   exp: number;
@@ -19,9 +21,14 @@ export interface IPlayer extends Document {
     accessory: string | null;
   };
   unlockedAreas: string[];
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
+import bcrypt from 'bcrypt';
+
 const PlayerSchema: Schema = new Schema({
+  username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  password: { type: String, required: true, minlength: 6 },
   name: { type: String, required: true, unique: true },
   level: { type: Number, default: 1 },
   exp: { type: Number, default: 0 },
@@ -41,5 +48,18 @@ const PlayerSchema: Schema = new Schema({
   },
   unlockedAreas: { type: Array, default: ['新手村'] },
 }, { timestamps: true });
+
+// 密码加密中间件
+PlayerSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// 密码对比方法
+PlayerSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 export default mongoose.model<IPlayer>('Player', PlayerSchema);

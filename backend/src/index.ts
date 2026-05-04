@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import playerRouter from './routes/player';
+import battleRouter from './routes/battle';
+import Monster from './models/Monster';
 
 dotenv.config();
 
@@ -15,10 +17,15 @@ app.use(express.json());
 // 连接MongoDB
 const mongoURI = process.env.MONGO_URL || process.env.MONGODB_URI;
 mongoose.connect(mongoURI!)
-  .then(() => console.log('MongoDB连接成功'))
+  .then(async () => {
+    console.log('MongoDB连接成功');
+    // 初始化默认怪物数据
+    await Monster.initDefaultMonsters();
+  })
   .catch(err => console.error('MongoDB连接失败:', err));
 
 app.use('/api/player', playerRouter);
+app.use('/api/battle', battleRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: '武侠游戏后端服务运行正常' });
