@@ -16,9 +16,13 @@ jobs:
     - name: 拉取最新代码（手动clone彻底解决checkout错误）
       shell: powershell
       run: |
-        # 清空当前工作目录
-        Get-ChildItem -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        # 克隆最新的main分支代码（只拉最新1层，速度快）
+        # 彻底清空工作目录（先删除再重建，100%空）
+        $currentDir = Get-Location
+        cd ..
+        Remove-Item -Recurse -Force $currentDir -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Path $currentDir | Out-Null
+        cd $currentDir
+        # 克隆最新的main分支代码
         git clone --depth 1 --branch main https://github.com/paninix/wuxia-game.git .
     
     - name: 部署后端
