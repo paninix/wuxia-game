@@ -7,7 +7,7 @@ on:
 # 定义项目配置（新项目只需修改这里）
 env:
   PROJECT_NAME: wuxia-game
-  BACKEND_PORT: 3000
+  BACKEND_PORT: 8080
 
 jobs:
   deploy:
@@ -48,4 +48,4 @@ jobs:
         $targetDir = "D:/Development/okii-deploy/okii-front/$env:PROJECT_NAME"
         New-Item -ItemType Directory -Force -Path $targetDir
         Remove-Item -Recurse -Force "$targetDir/dist" -ErrorAction SilentlyContinue
-        Copy-Item -Recurse -Force dist "$targetDir/dist"
+        Copy-Item -Recurse -Force dist "$targetDir"

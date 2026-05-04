@@ -7,7 +7,7 @@ import playerRouter from './routes/player';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 8080;
 
 app.use(cors());
 app.use(express.json());
@@ -24,6 +24,17 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: '武侠游戏后端服务运行正常' });
 });
 
-app.listen(PORT, () => {
-  console.log(`服务运行在 http://localhost:${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  const address = server.address();
+  if (typeof address === 'string') {
+    console.log(`服务运行在 ${address}`);
+  } else if (address) {
+    console.log(`服务运行在 http://0.0.0.0:${address.port}`);
+    console.log(`本地访问地址: http://localhost:${address.port}`);
+  }
+});
+
+server.on('error', (err) => {
+  console.error('服务启动失败:', err);
+  process.exit(1);
 });
