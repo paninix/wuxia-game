@@ -13,10 +13,13 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # 拉取完整git历史，解决找不到commit的问题
-        clean: true # 自动清理runner缓存目录
+    - name: 拉取最新代码（手动clone彻底解决checkout错误）
+      shell: powershell
+      run: |
+        # 清空当前工作目录
+        Get-ChildItem -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        # 克隆最新的main分支代码（只拉最新1层，速度快）
+        git clone --depth 1 --branch main https://github.com/paninix/wuxia-game.git .
     
     - name: 部署后端
       run: |
