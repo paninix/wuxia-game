@@ -32,20 +32,30 @@ jobs:
         npm install
         npm run build
         
+        # 检查build是否成功（关键！避免空dist部署）
+        if (-not (Test-Path dist/index.js)) {
+          Write-Error "❌ 后端build失败，dist/index.js不存在，请检查ts配置"
+          exit 1
+        }
+        Write-Host "✅ 后端build成功，dist目录大小: $((Get-ChildItem dist -Recurse | Measure-Object Length -Sum).Sum / 1MB) MB"
+        
         # 部署到统一目录
         $targetDir = "D:/Development/okii-deploy/okii-back/$env:PROJECT_NAME"
         New-Item -ItemType Directory -Force -Path $targetDir
-        Remove-Item -Recurse -Force "$targetDir/dist" -ErrorAction SilentlyContinue
+        Remove-Item -Recurse -Force "$targetDir/*" -ErrorAction SilentlyContinue
         Copy-Item -Recurse -Force dist "$targetDir/dist"
         Copy-Item -Force package.json "$targetDir/package.json"
+        Copy-Item -Force .env "$targetDir/.env" -ErrorAction SilentlyContinue
         
-        # 到统一目录重启 PM2
+        # 到统一目录安装生产依赖
         cd $targetDir
-        npm install
-        node node_modules/pm2/bin/pm2 restart $env:PROJECT_NAME
-        if ($LASTEXITCODE -ne 0) {
-          node node_modules/pm2/bin/pm2 start dist/index.js --name $env:PROJECT_NAME
-        }
+        npm install --omit=dev --no-fund --no-audit
+        
+        # 用全局PM2启动（避免本地pm2版本不匹配问题）
+        pm2 stop $env:PROJECT_NAME -ErrorAction SilentlyContinue
+        pm2 delete $env:PROJECT_NAME -ErrorAction SilentlyContinue
+        pm2 start dist/index.js --name $env:PROJECT_NAME --env production
+        Write-Host "✅ 后端服务启动成功，端口: $env:BACKEND_PORT"
     
     - name: 部署前端
       run: |
