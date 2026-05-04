@@ -14,6 +14,9 @@ jobs:
     runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # 拉取完整git历史，解决找不到commit的问题
+        clean: true # 自动清理runner缓存目录
     
     - name: 部署后端
       run: |
