@@ -16,12 +16,12 @@ jobs:
     - name: 拉取最新代码（手动clone彻底解决checkout错误）
       shell: powershell
       run: |
-        # 彻底清空工作目录（先删除再重建，100%空）
-        $currentDir = Get-Location
-        cd ..
-        Remove-Item -Recurse -Force $currentDir -ErrorAction SilentlyContinue
-        New-Item -ItemType Directory -Path $currentDir | Out-Null
-        cd $currentDir
+        # 第一步：强制删除当前目录下所有可见文件
+        Remove-Item -Path .\* -Recurse -Force -ErrorAction SilentlyContinue
+        # 第二步：强制删除所有隐藏/系统文件（避免.git目录残留）
+        Get-ChildItem -Hidden -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        # 等1秒保证文件系统操作完成（Windows文件系统延迟问题）
+        Start-Sleep -Seconds 1
         # 克隆最新的main分支代码
         git clone --depth 1 --branch main https://github.com/paninix/wuxia-game.git .
     
