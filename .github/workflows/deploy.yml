@@ -1,164 +1,41 @@
 name: 自动部署
-
 on:
   push:
     branches: [ main ]
-
-# 定义项目配置（新项目只需修改这里）
-env:
-  PROJECT_NAME: wuxia-game
-  BACKEND_PORT: 8080
 
 jobs:
   deploy:
     runs-on: self-hosted
     steps:
-    - name: 拉取最新代码（手动clone彻底解决checkout错误）
+    - name: 拉取最新代码
       shell: powershell
       run: |
-        # 第一步：强制删除当前目录下所有可见文件
         Remove-Item -Path .\* -Recurse -Force -ErrorAction SilentlyContinue
-        # 第二步：强制删除所有隐藏/系统文件（避免.git目录残留）
         Get-ChildItem -Hidden -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        # 等1秒保证文件系统操作完成（Windows文件系统延迟问题）
         Start-Sleep -Seconds 1
-        # 克隆最新的main分支代码
         git clone --depth 1 --branch main https://github.com/paninix/wuxia-game.git .
-    
-    - name: 部署后端
+
+    - name: 一键构建更新所有服务
       shell: powershell
       run: |
-        $ErrorActionPreference = "Stop"
-        # 解决PowerShell中文乱码问题
-        chcp 65001 | Out-Null
-        $OutputEncoding = [System.Text.Encoding]::UTF8
+        # 构建并启动所有服务，自动删除旧容器
+        docker-compose up -d --build --remove-orphans
         
-        # 在 runner 临时目录构建
-        cd backend
-        npm install
-        npm run build
+        # 等待服务启动完成
+        Start-Sleep -Seconds 10
         
-        # 检查build是否成功（关键！避免空dist部署）
-        if (-not (Test-Path dist/index.js)) {
-          Write-Error "❌ 后端build失败，dist/index.js不存在，请检查ts配置"
-          Get-ChildItem dist -Recurse | Write-Host
-          exit 1
-        }
-        Write-Host "✅ 后端build成功，dist目录大小: $([math]::Round((Get-ChildItem dist -Recurse | Measure-Object Length -Sum).Sum / 1MB, 2)) MB"
-        
-        # 部署到统一目录
-        $targetDir = "D:/Development/okii-deploy/okii-back/$env:PROJECT_NAME"
-        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        Remove-Item -Recurse -Force "$targetDir/*" -ErrorAction SilentlyContinue
-        
-        # ✅ 修复dist嵌套问题：复制dist目录下的所有内容，而不是dist文件夹本身
-        Copy-Item -Recurse -Force dist/* "$targetDir/"
-        Copy-Item -Force package.json "$targetDir/package.json"
-        # 兜底.env文件，防止.gitignore忽略了.env导致部署失败
-        if (Test-Path .env) {
-          Copy-Item -Force .env "$targetDir/.env"
-          Write-Host "✅ 已复制本地.env配置文件"
-        } else {
-          Write-Host "⚠️ 本地.env不存在，自动生成生产环境配置"
-          @"
-PORT=$env:BACKEND_PORT
-MONGODB_URI=mongodb://localhost:27017/wuxia-game
-JWT_SECRET=wuxia-game-production-secret-2026
-"@ | Out-File "$targetDir/.env" -Encoding UTF8
-        }
-        
-        # 打印部署目录结构，方便排查
-        Write-Host "📁 部署目录文件结构："
-        Get-ChildItem $targetDir -Recurse | Select-Object FullName, Length | Write-Host
-        if (-not (Test-Path "$targetDir/index.js")) {
-          Write-Error "❌ 部署失败，目标目录缺少index.js"
-          exit 1
-        }
-        
-        # 到统一目录安装生产依赖
-        cd $targetDir
-        npm install --omit=dev --no-fund --no-audit
-        
-        # 先同步PM2版本，避免版本不匹配
-        pm2 update | Out-Null
-        
-        # 清理旧进程，确保没有残留
-        pm2 stop $env:PROJECT_NAME -ErrorAction SilentlyContinue
-        pm2 delete $env:PROJECT_NAME -ErrorAction SilentlyContinue
-        pm2 save --force | Out-Null
-        
-        # 启动服务
-        Write-Host "🚀 正在启动后端服务..."
-        pm2 start index.js --name $env:PROJECT_NAME
-        
-        # 验证服务是否启动成功
-        Start-Sleep -Seconds 3
-        if (-not ((pm2 id $env:PROJECT_NAME) -match '\d+')) {
-          Write-Error "❌ 后端服务未在PM2中找到，启动失败"
-          pm2 logs $env:PROJECT_NAME --lines 50
-          exit 1
-        }
-        
-        # 健康检查，验证服务是否真的可以访问
+        # 验证服务是否正常
         try {
-          Write-Host "🔍 正在检查后端服务健康状态..."
-          $response = Invoke-WebRequest -Uri "http://localhost:$env:BACKEND_PORT/api/health" -TimeoutSec 10
+          $response = Invoke-WebRequest -Uri "http://localhost/api/health" -TimeoutSec 10
           if ($response.StatusCode -eq 200) {
-            Write-Host "✅ 后端服务健康检查成功，返回: $($response.Content)"
+            Write-Host "🎉 全站部署成功！"
+            Write-Host "👉 游戏访问地址：http://localhost"
+            Write-Host "👉 后端接口地址：http://localhost/api"
           } else {
-            throw "健康检查返回状态码异常: $($response.StatusCode)"
+            throw "健康检查失败，状态码：$($response.StatusCode)"
           }
         } catch {
-          Write-Error "❌ 后端服务健康检查失败: $_"
-          pm2 logs $env:PROJECT_NAME --lines 50
+          Write-Error "❌ 部署失败，正在打印日志排查..."
+          docker-compose logs --tail 100
           exit 1
         }
-    
-    - name: 部署前端
-      shell: powershell
-      run: |
-        $ErrorActionPreference = "Stop"
-        chcp 65001 | Out-Null
-        $OutputEncoding = [System.Text.Encoding]::UTF8
-        
-        # 在 runner 临时目录构建
-        cd frontend
-        npm install
-        npm run build
-        
-        # 检查build是否成功
-        if (-not (Test-Path dist/index.html)) {
-          Write-Error "❌ 前端build失败，dist/index.html不存在"
-          exit 1
-        }
-        Write-Host "✅ 前端build成功，dist目录大小: $([math]::Round((Get-ChildItem dist -Recurse | Measure-Object Length -Sum).Sum / 1MB, 2)) MB"
-        
-        # 部署到统一目录
-        $targetDir = "D:/Development/okii-deploy/okii-front/$env:PROJECT_NAME"
-        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        Remove-Item -Recurse -Force "$targetDir/*" -ErrorAction SilentlyContinue
-        Copy-Item -Recurse -Force dist/* "$targetDir/"
-        Write-Host "✅ 前端部署完成，文件已复制到 $targetDir"
-    
-    - name: 重启Nginx服务
-      shell: powershell
-      run: |
-        $ErrorActionPreference = "Stop"
-        $nginxDir = "D:/Development/nginx-1.25.3"
-        cd $nginxDir
-        
-        # 先测试Nginx配置是否正确
-        Write-Host "🔍 正在验证Nginx配置..."
-        $testOutput = ./nginx.exe -t 2>&1
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "❌ Nginx配置错误: $testOutput"
-          exit 1
-        }
-        
-        # 平滑重启Nginx
-        Write-Host "🔄 正在重启Nginx服务..."
-        ./nginx.exe -s stop 2>&1 | Out-Null
-        Start-Sleep -Seconds 2
-        ./nginx.exe
-        
-        Write-Host "🎉 全站部署成功！游戏访问地址: http://localhost/wuxia-game/"

@@ -1,0 +1,15 @@
+# 忽略不需要复制到镜像的文件，减小镜像体积
+node_modules
+dist
+build
+.git
+.github
+.vscode
+*.log
+*.md
+.DS_Store
+.env.local
+.env.development
+.env.production
+node_modules/
+*/node_modules/

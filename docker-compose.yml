@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # MongoDB数据库服务（自动启动，无需本地安装）
+  mongodb:
+    image: mongo:6
+    container_name: wuxia-game-mongodb
+    restart: always
+    # 数据持久化：容器删除数据也不会丢失
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: wuxia-game
+    # 健康检查：确保数据库真的启动成功
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    container_name: wuxia-game-backend
+    restart: always
+    depends_on:
+      mongodb:
+        condition: service_healthy # 等数据库启动成功再启后端，避免启动失败
+    environment:
+      - PORT=8080
+      # 数据库地址直接用MongoDB的服务名，Docker内部自动解析
+      - MONGODB_URI=mongodb://mongodb:27017/wuxia-game
+      - JWT_SECRET=wuxia-game-production-secret-2026
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 前端+Nginx服务
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    container_name: wuxia-game-frontend
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy # 等后端启动成功再启前端
+    ports:
+      - "80:80" # 直接访问本机80端口就是游戏，不用加路径
+
+# 持久化数据卷，存储MongoDB数据
+volumes:
+  mongodb_data:
+    name: wuxia-game-mongodb-data
