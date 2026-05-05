@@ -1,0 +1,53 @@
+# Wuxia-Game 文字武侠游戏开发进度
+## 需求设计阶段
+✅ 功能需求梳理（单机、模块化、全栈学习导向）
+## 方案设计阶段
+✅ 数据库设计思路（单嵌入式文档存用户存档）
+✅ 前后端模块划分思路
+## 编码阶段
+### 第一优先级（角色系统+存档系统+UI基础框架）
+✅ 后端数据库Schema/Model开发（User存档模型）
+✅ 后端角色管理API开发（/api/user/list/create/detail/update/delete）
+✅ 后端静态数据与工具函数开发（sectData、responseUtils、expUtils）
+✅ 后端主文件更新（指定.env路径、添加全局错误处理、挂载user路由）
+✅ 后端TypeScript类型错误修复
+✅ 前端vite.config.ts更新（路径别名、base路径）
+✅ 前端tsconfig.app.json更新（路径别名支持）
+✅ 前端.env更新（API_BASE_URL）
+✅ 前端utils/request.ts更新（统一响应类型、响应拦截器、保留player接口兼容性）
+✅ 前端类型定义开发（types/user.ts、门派类型）
+✅ 前端门派静态数据开发（data/sectData.ts）
+✅ 前端user API开发（api/user.ts）
+✅ 前端user Store开发（stores/userStore.ts）
+✅ 前端路由配置开发（router/index.ts）
+✅ 前端main.ts更新（注册Pinia、Vue Router、Element Plus、图标库）
+✅ 前端App.vue简化（路由视图）
+✅ 前端HomeView.vue开发（角色选择/创建界面）
+✅ 前端GameView.vue开发（游戏主界面、修炼/历练/休息功能）
+✅ 前后端联调成功，功能正常运行
+### 第二优先级（背包/装备/物品系统）
+⬜ 后端物品Schema/Model开发
+⬜ 后端物品管理API开发
+⬜ 前端物品类型定义
+⬜ 前端物品API开发
+⬜ 前端背包/装备界面开发
+### 第三优先级（核心战斗系统）
+⬜ 后端战斗逻辑API开发
+⬜ 前端战斗状态管理
+⬜ 前端战斗界面开发
+### 第四优先级（探索地图系统+随机事件）
+⬜ 后端地图数据开发
+⬜ 后端随机事件API开发
+⬜ 前端地图界面开发
+### 第五优先级（武学系统）
+⬜ 后端武学Schema/Model开发
+⬜ 后端武学管理API开发
+⬜ 前端武学界面开发
+### 第六优先级（任务系统）
+⬜ 后端任务Schema/Model开发
+⬜ 后端任务管理API开发
+⬜ 前端任务界面开发
+### 第七优先级（UI优化与体验提升）
+⬜ 响应式优化
+⬜ 动画效果优化
+⬜ 全局提示系统完善
